@@ -1,19 +1,18 @@
 package com.chatbot.Sahayakam.controller;
 
+import com.chatbot.Sahayakam.SahayakamApplication;
 import com.chatbot.Sahayakam.dto.GPTrequest;
 import com.chatbot.Sahayakam.dto.GPTresponse;
 import com.chatbot.Sahayakam.service.OpenAPIServiceImplementation;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.http.HttpEntity;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.MediaType;
-import org.springframework.http.ResponseEntity;
+import org.springframework.http.*;
 import org.springframework.web.bind.annotation.*;
 
 import com.chatbot.Sahayakam.service.ChatbotAPIService;
@@ -23,8 +22,10 @@ import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
 
 @RestController()
 @RequestMapping("ChatBotAPI")
+@CrossOrigin(origins = "*")
 public class ChatbotAPIController {
-	Logger logger = LoggerFactory.getLogger(ChatbotAPIController.class);
+
+	private static final Logger logger = LogManager.getLogger(ChatbotAPIController.class);
 	@Autowired
 	private ChatbotAPIService chatbotAPIService;
 	@Autowired
@@ -67,6 +68,7 @@ public class ChatbotAPIController {
 		ResponseEntity<GPTresponse> response = template.postForEntity(apiURL, entity, GPTresponse.class);
 		logger.info(" ** Response Received from  GPT API ** "+ response.getStatusCode());
 		if (response.getStatusCode().is2xxSuccessful()) {
+
 			GPTresponse gptResponse = response.getBody();
 			if (gptResponse != null && gptResponse.getChoices() != null && !gptResponse.getChoices().isEmpty()) {
 				logger.info(" ** Exiting from chatmsg API Service  with status code " + response.getStatusCode() + " **" );
@@ -83,11 +85,14 @@ public class ChatbotAPIController {
 
 
 	@PostMapping(path="/conversationalChat")
-	public String conversationalChat(@RequestBody String msg) throws JsonProcessingException {
+	public ResponseEntity<String> conversationalChat(@RequestBody String msg) throws JsonProcessingException {
 		logger.info(" ** Entering conversationalChat API **");
 		String res = openAPIServiceImplementation.conversationalChat(msg);
+		HttpHeaders headers = new HttpHeaders();
+		headers.setContentType(MediaType.APPLICATION_JSON);
 		logger.info(" ** Exiting conversationalChat API **");
-		return res;
+		return new ResponseEntity<>("{\"response\": \"" + res + "\"}", headers, HttpStatus.OK);
+
 	}
 
 
