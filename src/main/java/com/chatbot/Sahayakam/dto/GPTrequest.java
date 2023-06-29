@@ -8,6 +8,16 @@ public class GPTrequest {
     private String model;
     private List<Message> messages;
 
+    private String prompt;
+
+    public void setPrompt(String prompt) {
+        this.prompt = prompt;
+    }
+
+    public String getPrompt() {
+        return prompt;
+    }
+
     public GPTrequest() {
     }
 

@@ -15,6 +15,7 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
+import org.springframework.web.client.HttpServerErrorException;
 import org.springframework.web.client.RestTemplate;
 
 import java.util.ArrayList;
@@ -80,11 +81,11 @@ public class OpenAPIServiceImplementation implements OpenAPIService {
 
         logger.info(" ** Req Res requestList ** " + entity.getBody().getModel().toString() );
 
-//        entity.getBody().getMessages().stream().forEach((m) ->{
-//            logger.info(" ** Req Res msgList ** " + m.getRole().toString() );
-//            logger.info(" ** Req Res msgList ** " + m.getContent().toString() );
-//            System.out.println(m.getContent());
-//        });
+        entity.getBody().getMessages().stream().forEach((m) ->{
+            logger.info(" ** Req Res msgList ** " + m.getRole().toString() );
+            logger.info(" ** Req Res msgList ** " + m.getContent().toString() );
+            System.out.println(m.getContent());
+        });
 
 
         ResponseEntity<GPTresponse> response = template.postForEntity(apiURL, entity, GPTresponse.class);
@@ -100,10 +101,11 @@ public class OpenAPIServiceImplementation implements OpenAPIService {
                 logger.info(" ** Exiting from chatmsg API Service  with status code " + response.getStatusCode() + " **");
                 return gptResponse.getChoices().get(0).getMessage().getContent();
             }
-            return "No response from the GPT API.";
+
         } else {
             logger.error(" ** Error Received from GPT API **");
-            return "Error: " + response.getStatusCode();
+            throw new HttpServerErrorException(response.getStatusCode());
         }
+        return "No response from the GPT API.";
     }
 }

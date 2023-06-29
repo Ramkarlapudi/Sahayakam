@@ -1,13 +1,13 @@
 package com.chatbot.Sahayakam.controller;
 
-import com.chatbot.Sahayakam.SahayakamApplication;
 import com.chatbot.Sahayakam.dto.GPTrequest;
 import com.chatbot.Sahayakam.dto.GPTresponse;
+import com.chatbot.Sahayakam.dto.UserRequest;
+import com.chatbot.Sahayakam.exception.UserRequestException;
 import com.chatbot.Sahayakam.service.OpenAPIServiceImplementation;
 import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.SerializationFeature;
 
+import io.micrometer.common.util.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -85,18 +85,21 @@ public class ChatbotAPIController {
 
 
 	@PostMapping(path="/conversationalChat")
-	public ResponseEntity<String> conversationalChat(@RequestBody String msg) throws JsonProcessingException {
-		logger.info(" ** Entering conversationalChat API **");
-		String res = openAPIServiceImplementation.conversationalChat(msg);
-		HttpHeaders headers = new HttpHeaders();
-		headers.setContentType(MediaType.APPLICATION_JSON);
-		logger.info(" ** Exiting conversationalChat API **");
-		return new ResponseEntity<>("{\"response\": \"" + res + "\"}", headers, HttpStatus.OK);
+	public ResponseEntity<String> conversationalChat(@RequestBody UserRequest msg) throws JsonProcessingException, UserRequestException {
+		logger.info(" ** Entering conversationalChat API ** "+msg.getPrompt().toString());
+		if (!StringUtils.isEmpty(msg.getPrompt())   || msg.getPrompt()!=null) {
+			String res = openAPIServiceImplementation.conversationalChat(msg.getPrompt());
+			HttpHeaders headers = new HttpHeaders();
+			headers.setContentType(MediaType.APPLICATION_JSON);
+			logger.info(" ** Exiting conversationalChat API **");
+			return new ResponseEntity<>("{\"response\": \"" + res + "\"}", headers, HttpStatus.OK);
+		}else {
+             throw new UserRequestException("Request should not be Empty or Null");
+		}
+
+
 
 	}
-
-
-
 	}
 
 
