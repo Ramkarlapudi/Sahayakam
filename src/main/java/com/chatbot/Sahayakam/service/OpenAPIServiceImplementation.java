@@ -1,6 +1,7 @@
 package com.chatbot.Sahayakam.service;
 
 import com.chatbot.Sahayakam.controller.ChatbotAPIController;
+import com.chatbot.Sahayakam.dto.ChatCompletion;
 import com.chatbot.Sahayakam.dto.GPTrequest;
 import com.chatbot.Sahayakam.dto.GPTresponse;
 import com.chatbot.Sahayakam.dto.Message;
@@ -41,16 +42,17 @@ public class OpenAPIServiceImplementation implements OpenAPIService {
     private RestTemplate template;
 
 
-    @Override
     public String conversationalChat(String prompt) {
         logger.info(" ** Entering conversationalChat Service **");
-        GPTrequest requestList = null;
+
+        ChatCompletion chatCompletion = null;
+        List<Message> messages = null;
         List<ReqResMessageEntity> reqResMessageEntityList = new ArrayList<ReqResMessageEntity>();
         ReqResMessageEntity reqResMessageEntity = new ReqResMessageEntity();
 
         if (reqResMessageRepository.existsBy()) {
             reqResMessageEntityList = reqResMessageRepository.findAllByOrderByIdAsc();
-            List<Message> messages = new ArrayList<Message>();
+             messages = new ArrayList<Message>();
             Message systemMsg = new Message();
             systemMsg.setRole("system");
             systemMsg.setContent("You are a helpful assistant.");
@@ -67,26 +69,36 @@ public class OpenAPIServiceImplementation implements OpenAPIService {
                 assistantMsg.setContent(MessageEntity.getResMessage());
                 messages.add(assistantMsg);
             }
+
             Message newMsg = new Message();
             newMsg.setRole("user");
             newMsg.setContent(prompt);
             messages.add(newMsg);
-            requestList = new GPTrequest(model, messages);
+
+            chatCompletion = new ChatCompletion();
+            chatCompletion.setModel("gpt-3.5-turbo");
+            chatCompletion.setMessages(messages);
+
         } else {
-            requestList = new GPTrequest(model, prompt);
+            chatCompletion = new ChatCompletion();
+            messages =  new ArrayList<Message>();
+            chatCompletion.setModel("gpt-3.5-turbo");
+            Message userMsg = new Message();
+            userMsg.setRole("user");
+            userMsg.setContent(prompt);
+            messages.add(userMsg);
+            chatCompletion.setMessages(messages);
         }
 
-        HttpEntity<GPTrequest> entity = new HttpEntity<>(requestList);
+        HttpEntity<ChatCompletion> entity = new HttpEntity<>(chatCompletion);
 
-
-        logger.info(" ** Req Res requestList ** " + entity.getBody().getModel().toString() );
+        logger.info(" ** Req Res chatCompletion ** " + entity.getBody().getModel().toString() );
 
         entity.getBody().getMessages().stream().forEach((m) ->{
             logger.info(" ** Req Res msgList ** " + m.getRole().toString() );
             logger.info(" ** Req Res msgList ** " + m.getContent().toString() );
             System.out.println(m.getContent());
         });
-
 
         ResponseEntity<GPTresponse> response = template.postForEntity(apiURL, entity, GPTresponse.class);
         logger.info(" ** Response Received from  GPT API ** " + response.getStatusCode());
@@ -108,4 +120,5 @@ public class OpenAPIServiceImplementation implements OpenAPIService {
         }
         return "No response from the GPT API.";
     }
+
 }

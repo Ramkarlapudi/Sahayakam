@@ -1,8 +1,6 @@
 package com.chatbot.Sahayakam.controller;
 
-import com.chatbot.Sahayakam.dto.GPTrequest;
-import com.chatbot.Sahayakam.dto.GPTresponse;
-import com.chatbot.Sahayakam.dto.UserRequest;
+import com.chatbot.Sahayakam.dto.*;
 import com.chatbot.Sahayakam.exception.UserRequestException;
 import com.chatbot.Sahayakam.service.OpenAPIServiceImplementation;
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -17,6 +15,8 @@ import org.springframework.web.bind.annotation.*;
 
 import com.chatbot.Sahayakam.service.ChatbotAPIService;
 import org.springframework.web.client.RestTemplate;
+
+import java.util.List;
 
 import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
 
@@ -85,22 +85,25 @@ public class ChatbotAPIController {
 
 
 	@PostMapping(path="/conversationalChat")
-	public ResponseEntity<String> conversationalChat(@RequestBody UserRequest msg) throws JsonProcessingException, UserRequestException {
-		logger.info(" ** Entering conversationalChat API ** "+msg.getPrompt().toString());
-		if (!StringUtils.isEmpty(msg.getPrompt())   || msg.getPrompt()!=null) {
-			String res = openAPIServiceImplementation.conversationalChat(msg.getPrompt());
-			HttpHeaders headers = new HttpHeaders();
-			headers.setContentType(MediaType.APPLICATION_JSON);
-			logger.info(" ** Exiting conversationalChat API **");
-			return new ResponseEntity<>("{\"response\": \"" + res + "\"}", headers, HttpStatus.OK);
-		}else {
-             throw new UserRequestException("Request should not be Empty or Null");
+	public ResponseEntity<String> conversationalChat(@RequestBody ChatCompletion chatCompletion) throws JsonProcessingException, UserRequestException {
+		logger.info(" ** Entering conversationalChat API ** "+chatCompletion.toString());
+
+		List<Message> messages = chatCompletion.getMessages();
+		if (messages != null && !messages.isEmpty()) {
+			Message lastMessage = messages.get(messages.size() - 1);
+			if (lastMessage != null && !StringUtils.isEmpty(lastMessage.getContent())) {
+				String res = openAPIServiceImplementation.conversationalChat(lastMessage.getContent());
+				HttpHeaders headers = new HttpHeaders();
+				headers.setContentType(MediaType.APPLICATION_JSON);
+				logger.info(" ** Exiting conversationalChat API **");
+				return new ResponseEntity<>("{\"response\": \"" + res + "\"}", headers, HttpStatus.OK);
+			}
 		}
 
-
-
+		throw new UserRequestException("Message content in request should not be Empty or Null");
 	}
-	}
+
+}
 
 
 	
